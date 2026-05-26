@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘의 트랜스포머</title>
+
+<style>
+@font-face { font-family: '나눔바른펜'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumBarunpen.woff') format('woff'); font-weight: normal; font-display: swap; }
+@font-face { font-family: 'Watermelon'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-EF@1.0/EF_watermelonSalad.woff2') format('woff2'); font-weight: normal; font-display: swap; }
+@font-face { font-family: '마루 부리'; src: url('https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Light.woff2') format('woff2'); font-weight: 300; font-display: swap; }
+
+body {
+  text-align: center;
+  font-family: Arial;
+  font-size: 0.7rem;
+}
+
+#cards {
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height:2.4rem;
+  position: relative;
+  padding-top: 0.1rem;
+}
+  
+.card {
+  position: relative;
+  border: 0.5px solid #ccc;
+  border-radius: 1px;
+  padding: 5px;
+  width: 5.5rem;
+  height: 7.3rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.card.open {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.score-box {
+  margin-top: auto;
+  margin-left: 0.3rem;
+  text-align: left;
+  font-size: 0.4rem;
+  line-height: 0.54rem;
+  letter-spacing: 0.426rem;
+}
+.name {
+  margin-top: auto;
+  margin-bottom: auto;
+  text-align: center;
+  width: 100%;
+  font-family: '나눔바른펜';
+  font-size: 0.8rem;
+  color: jet;
+  letter-spacing: -0.045rem;
+  word-break: keep-all;
+  line-height: 0.8rem;
+}
+.message {
+  font-size: 0.45rem;
+  font-family: '마루 부리';
+  text-align: left;
+  margin-bottom: 0.25rem;
+  line-height: 0.5rem;
+}
+.order {
+  font-size: 0.4rem;
+  color: #87cefa;
+  position: absolute;
+  top: 0;
+  right: 0.4rem;
+}
+.number {
+  font-size: 0.3rem;
+  color: gray;
+  position: absolute;
+  top: 0.15rem;
+  left: 0.4rem;
+}
+h1 {
+  font-family: 'Watermelon';
+}
+.card.reversed {
+  transform: rotate(180deg);
+}
+  .controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-top: 0.5rem;
+  flex-wrap: nowrap;
+}
+  select {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.1rem;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.05rem;
+  font-size: 0.7rem;
+}
+
+button {
+  padding: 0rem 0.1rem 0rem 0.1rem;
+  font-size: 0.7rem;
+  background: linear-gradient(45deg, red 50%, purple 50%);
+  border: 0.5px solid gray;
+  border-radius: 2px;
+  color: white;
+}
+</style>
+
+</head>
+<body>
+
+<h1>오늘의 트랜스포머</h1>
+
+💖: 애정운 / 🛡: 건강운 / 💰: 재물운 / 🏅: 성취운 / 🍀: 행운<br>
+<div class="controls">
+
+  <select id="count">
+    <option value="1">1장</option>
+    <option value="3">3장</option>
+    <option value="5">5장</option>
+    <option value="7">7장</option>
+    <option value="10">10장</option>
+  </select>
+
+  <label class="checkbox">
+    <input type="checkbox" id="reverseToggle">
+    역방향 포함
+  </label>
+
+  <button onclick="start()">뽑기</button>
+
+</div>
+
+<hr>
+
+<div id="cards"></div>
+
+<script>
+const data = {
+  0: { name: "테일게이트", msg: "모르면 배우면 된다", score: [4,3,3,2,3], title: "The Fool" },
+  1: { name: "휠잭", msg: "모 아니면 도", score: [3,4,3,3,3], title: "The Magician" },
+  2: { name: "에어라크니드", msg: "명령받는 타입이 아니라면 결단은 빠르게", score: [2,3,3,2,2], title: "The High Priestess" },
+  3: { name: "솔러스 프라임", msg: "길이 없다면 만들어라", score: [3,4,5,5,2], title: "The Empress" },
+  4: { name: "옵티머스 프라임", msg: "지키고 싶은 소중한 것들을 위하여", score: [5,4,4,5,3] , title: "The Emperor"},
+  5: { name: "컵", msg: "나 때는 말이야에 귀를 기울이면", score: [4,3,3,4,3] , title: "The Hierophant"},
+  6: { name: "크롬돔", msg: "좁은 문으로 들어가기를 힘쓰라", score: [2,3,3,3,3] , title: "The Lovers"},
+  7: { name: "아이언하이드", msg: "호쾌하게 관철해 나간다면", score: [5,3,3,4,3] , title: "The Chariot"},
+  8: { name: "메가트로너스 프라임", msg: "폭력과 공포는 사랑보다 오래 가는 힘", score: [2,4,4,5,2] , title: "Strength"},
+  9: { name: "사운드웨이브", msg: "자신의 능력만 쓰려는 사람은 삼류", score: [4,3,3,4,3] , title: "The Hermit"},
+ 10: { name: "스모크스크린", msg: "그만둬야 할 때를 아는 것도 운이다", score: [3,3,1,2,5], title: "Wheel of Fortune" },
+ 11: { name: "스타 세이버", msg: "내 편이라고 정했으면 철저히 믿어라", score: [4,4,4,5,4] , title: "Justice"},
+ 12: { name: "울트라 매그너스", msg: "고난 속에서도 인내와 정도를", score: [3,4,3,4,2], title: "The Hanged Man" },
+ 13: { name: "스타스크림", msg: "비교와 탐욕은 지옥의 길", score: [1,3,3,4,4] , title: "Death"},
+ 14: { name: "드리프트", msg: "주어진 모든 것에 감사하는 마음으로", score: [4,3,5,3,4], title: "Temperance" },
+ 15: { name: "파르마", msg: "살을 내어주고 뼈를 잘라라", score: [2,5,3,2,1] , title: "The Devil"},
+ 16: { name: "오버로드", msg: "살아 있다는 건 고난의 연속", score: [1,4,3,2,3] , title: "The Tower"},
+ 17: { name: "로디머스 프라임", msg: "왕관을 쓰려는 자 그 무게를 견뎌라", score: [4,4,4,5,3] , title: "The Star"},
+ 18: { name: "섀도 스트라이커", msg: "얼마나보다는 어떻게 살 것인가", score: [2,1,3,2,2] , title: "The Moon"},
+ 19: { name: "범블비", msg: "자신의 자리에서 할 수 있는 최선을", score: [4,3,3,4,3] , title: "The Sun"},
+ 20: { name: "갓 진라이", msg: "상실과 변화는 모두 하나의 흐름", score: [4,4,4,5,3] , title: "Judgement"},
+ 21: { name: "윈드블레이드", msg: "대부분의 문제는 대화로 해결된다", score: [4,3,3,3,3] , title: "The World"},
+ 22: { name: "미라지", msg: "재능은 노력과 함께", score: [3,3,4,3,2], title: "Ace of Wands"},
+ 23: { name: "봄셸", msg: "세상은 능력이 전부", score: [3,3,3,3,3] , title: "2 of Wands"},
+ 24: { name: "하운드", msg: "중요하다면 끈질기게 좇아야", score: [3,3,3,2,3] , title: "3 of Wands"},
+ 25: { name: "미스파이어", msg: "빗나가더라도 과정이 좋다면야", score: [2,2,2,1,4], title: "4 of Wands" },
+ 26: { name: "갈바트론", msg: "약 먹고 푹 쉬면 좀 나아지겠지", score: [1,2,3,5,3] , title: "5 of Wands"},
+27: { name: "스크래퍼", msg: "뭉치면 살고 흩어지면 죽는다", score: [3,3,3,3,3] , title: "6 of Wands"},
+28: { name: "모터마스터", msg: "질주하기 전에 방향부터 확인", score: [2,3,3,2,3], title: "7 of Wands" },
+29: { name: "블러", msg: "빨라도 한 걸음, 느려도 한 걸음", score: [3,3,3,2,3], title: "8 of Wands" },
+30: { name: "포트리스 맥시머스", msg: "나를 죽이지 못하는 것은 나를 더 강하게 만든다", score: [3,4,3,4,2] , title: "9 of Wands"},
+31: { name: "실버볼트", msg: "자리가 사람을 만든다", score: [2,3,3,2,2], title: "10 of Wands" },
+32: { name: "휠리", msg: "별 것 아닌 일이란 없다", score: [3,2,3,2,4], title: "Page of Wands" },
+33: { name: "스카이워프", msg: "자기과신은 금물", score: [3,3,3,2,3] , title: "Knight of Wands"},
+34: { name: "알시", msg: "부드러움은 최고의 창이요 방패이다", score: [4,3,3,3,3] , title: "Queen of Wands"},
+35: { name: "그림록", msg: "가끔은 생각을 그만둬도 좋다", score: [3,4,3,4,4], title: "King of Wands" },
+36: { name: "비치코머", msg: "순진하진 않더라도 순수하게", score: [4,2,3,2,3], title: "Ace of Cups" },
+37: { name: "클로버", msg: "굽히지 않고 구부러지려면", score: [3,3,3,2,3], title: "2 of Cups" },
+38: { name: "렉가", msg: "바 윕 그라나 윕 니니봉?", score: [4,3,4,2,3], title: "3 of Cups" },
+39: { name: "아스트로트레인", msg: "무임승차는 사절합니다", score: [3,4,3,3,3], title: "4 of Cups" },
+40: { name: "식스샷", msg: "곁에서 말을 나눠줄 한 사람만 있어도", score: [2,4,3,2,3], title: "5 of Cups" },
+41: { name: "브레인스톰", msg: "재채기, 가난 그리고 사랑", score: [2,3,3,2,3], title: "6 of Cups" },
+42: { name: "겟어웨이", msg: "야망은 쟁취하지 못하면 죄가 된다", score: [2,3,3,2,2], title: "7 of Cups" },
+43: { name: "탄", msg: "배우는 배역이 아닐진대", score: [1,1,3,3,2], title: "8 of Cups"},
+44: { name: "니들노즈", msg: "먼 길 돌아 시작으로", score: [3,3,3,3,3], title: "9 of Cups" },
+45: { name: "사리 숨닥", msg: "새옹지마 전화위복", score: [3,3,3,4,4] , title: "10 of Cups"},
+46: { name: "퍼스트 에이드", msg: "신념을 지키기 위한 대가란", score: [4,5,2,2,2], title: "Page of Cups" },
+47: { name: "호이스트", msg: "겸손과 친절은 공짜", score: [3,3,3,2,3] , title: "Knight of Cups"},
+48: { name: "벨로시티", msg: "마지막에 웃는 건 포기하지 않은 사람", score: [3,5,3,2,3] , title: "Queen of Cups"},
+49: { name: "라쳇", msg: "직과 업을 대할 때는 항상 진지하게", score: [3,5,3,4,3] , title: "King of Cups"},
+50: { name: "퍼셉터", msg: "펜은 칼보다 강하다", score: [3,2,3,3,3] , title: "Ace of Swords"},
+51: { name: "센티널 프라임", msg: "삐그덕거려도 살아만 진다면 ok?", score: [2,3,3,1,4], title: "2 of Swords" },
+52: { name: "스캐빈저", msg: "빠진 조각은 빠진 그대로", score: [3,3,3,3,3], title: "3 of Swords" },
+53: { name: "썬더크래커", msg: "언제 어디서나 나를 잃지 말아야 함은", score: [4,3,3,3,3], title: "4 of Swords" },
+54: { name: "클리프점퍼", msg: "마음이 앞서진 않았는지", score: [3,3,3,3,1], title: "5 of Swords" },
+55: { name: "블리츠윙", msg: "아닌 건 아니라고 말하자", score: [3,4,3,3,3], title: "6 of Swords" },
+56: { name: "스윈들", msg: "재물은 있는데 지킬 힘이 없다면", score: [2,3,5,2,3] , title: "7 of Swords"},
+57: { name: "브롤", msg: "남이 시킨 대로 한다고 남의 인생이 되진 않는다", score: [2,3,2,2,3], title: "8 of Swords" },
+58: { name: "쇼크웨이브", msg: "사람은 누구도 섬이 아니다", score: [2,3,2,2,2], title: "9 of Swords" },
+59: { name: "데드 엔드", msg: "우울은 나선형이다", score: [2,2,3,2,3], title: "10 of Swords" },
+60: { name: "레드 얼럿", msg: "돌다리도 두들겨 보고 건너라", score: [2,2,3,2,2], title: "Page of Swords" },
+61: { name: "나이트비트", msg: "진리는 나의 빛", score: [3,3,3,2,3], title: "Knight of Swords" },
+62: { name: "엘리타 원", msg: "별은 어두울수록 밝게 빛나는 법", score: [5,3,3,4,2], title: "Queen of Swords" },
+63: { name: "프라울", msg: "모두가 yes라 할 때 no를 외칠 각오란", score: [2,3,3,4,3] , title: "King of Swords"},
+64: { name: "재즈", msg: "즐기는 자는 당해낼 수 없다", score: [4,3,3,4,3] , title: "Ace of Pentacles"},
+65: { name: "넉아웃", msg: "자연스럽게 시류에 편승하기", score: [4,5,3,2,3], title: "2 of Pentacles"},
+66: { name: "럼블", msg: "실무자라면 프라이드를 갖고", score: [3,3,3,3,3], title: "3 of Pentacles" },
+67: { name: "메가트론", msg: "독을 품은 달콤한 말과 심장을 겨눈 총구", score: [2,4,4,5,3] , title: "4 of Pentacles"},
+68: { name: "옥테인", msg: "누울 자리 봐 가며 발을 뻗어라", score: [3,4,2,2,2] , title: "5 of Pentacles"},
+69: { name: "사이클로너스", msg: "그림자는 빛 아래 나오지 못한다", score: [2,4,3,4,3], title: "6 of Pentacles" },
+70: { name: "데스자라스", msg: "집착은 시야를 좁게 한다", score: [1,4,4,5,2] , title: "7 of Pentacles"},
+71: { name: "아이언피스트", msg: "호의가 계속되면 권리인 줄 안다", score: [1,1,3,2,2], title: "8 of Pentacles" },
+72: { name: "노티카", msg: "필요한 순간에 해결사가 되어 주는", score: [2,3,3,3,3], title: "9 of Pentacles" },
+73: { name: "블래스터", msg: "bpm을 올려서 하이텐션으로", score: [4,3,3,3,3], title: "10 of Pentacles" },
+74: { name: "제트파이어", msg: "변하는 것과 변치 않는 것들", score: [3,4,3,3,3], title: "Page of Pentacles" },
+75: { name: "코스모스", msg: "남들이 알아주지 않더라도", score: [2,3,3,2,2], title: "Knight of Pentacles" },
+76: { name: "파이라 마그나", msg: "굳이 바꾸려 들지 말아야 할 것들이 있다", score: [3,4,3,3,3], title: "Queen of Pentacles" },
+77: { name: "다이 아틀라스", msg: "항상 달성보다 유지가 어렵다", score: [3,4,3,3,3], title: "King of Pentacles" }
+};
+
+function getCharacter(num) {
+  return data[num] || {
+    name: "???" + num,
+    msg: "데이터 없음",
+    score: [3,3,3,3,3]
+  };
+}
+
+// 점수 렌더링
+function renderScore(score) {
+  const icons = ["💖", "🛡", "💰", "🏅", "🍀"];
+
+  return `
+    <div class="score-box">
+      <div>${icons[0].repeat(score[0])}</div>
+      <div>${icons[1].repeat(score[1])}</div>
+      <div>${icons[2].repeat(score[2])}</div>
+      <div>${icons[3].repeat(score[3])}</div>
+      <div>${icons[4].repeat(score[4])}</div>
+    </div>
+  `;
+}
+
+let deck = [];
+let clickOrder = 0;
+
+function start() {
+  const count = parseInt(document.getElementById("count").value);
+  const container = document.getElementById("cards");
+
+  container.innerHTML = "";
+  deck = [];
+  clickOrder = 0;
+
+  let numbers = Array.from({ length: 78 }, (_, i) => i);
+
+  for (let i = numbers.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i));
+    [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+  }
+
+  deck = numbers.slice(0, count);
+
+  for (let i = 0; i < count; i++) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.index = i;
+
+    card.onclick = reveal;
+
+    container.appendChild(card);
+  }
+}
+
+function reveal(e) {
+  const card = e.currentTarget;
+  const index = card.dataset.index;
+
+  if (card.dataset.opened === "true") return;
+
+  clickOrder++;
+
+  const num = deck[index];
+  const result = getCharacter(num);
+
+  card.classList.add("open");
+
+  card.innerHTML = `
+    <div class="order">${clickOrder}번째</div>
+    <div class="number">${result.title}</div>
+    <div class="header"><div class="name">${result.name}</div></div>
+    <div class="message">${result.msg}</div>
+    ${renderScore(result.score)}
+  `;
+
+  const isReverseEnabled = document.getElementById("reverseToggle").checked;
+let isReversed = false;
+
+if (isReverseEnabled) {
+  isReversed = Math.random() < 0.5;
+}
+  if (isReversed) {
+  card.classList.add("reversed");
+}
+  
+  card.dataset.opened = "true";
+}
+</script>
+
+</body>
+</html>
